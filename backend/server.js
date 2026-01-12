@@ -13,11 +13,10 @@ const server = http.createServer(app);
 connectDB();
 
 // Middleware
-app.use(express.json());
-app.use(cookieParser());
 app.use(cors({
-  origin: process.env.CLIENT_URL,
-  credentials: true // Important for Cookies
+  origin: process.env.CLIENT_URL, // e.g., 'https://gigflow-five.vercel.app'
+  credentials: true, // This allows the cookie to be sent
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']
 }));
 
 // Initialize Socket.io

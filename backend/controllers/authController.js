@@ -3,7 +3,22 @@ const jwt = require('jsonwebtoken');
 
 const generateToken = (res, userId) => {
   const token = jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '30d' });
+const sendToken = (user, statusCode, res) => {
+  const token = user.getSignedJwtToken();
 
+  const options = {
+    expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    httpOnly: true, // Prevents JS from reading the cookie
+    secure: process.env.NODE_ENV === 'production', // MUST be true for cross-site cookies
+    sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 'None' allows cross-site
+  };
+
+  res.status(statusCode).cookie('token', token, options).json({
+    success: true,
+    token,
+    user,
+  });
+};
   // Set HttpOnly Cookie 
   res.cookie('jwt', token, {
     httpOnly: true,
