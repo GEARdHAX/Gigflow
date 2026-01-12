@@ -6,28 +6,24 @@ const connectDB = require('./config/db');
 
 const app = express();
 
-// 1. Connect to Database
+// --- 1. CONNECT DB ---
 connectDB();
 
-// --- CRITICAL MIDDLEWARE ORDER ---
+// --- 2. TRUST PROXY (REQUIRED FOR RENDER COOKIES) ---
+app.set('trust proxy', 1); // <--- ADD THIS LINE HERE
 
-// A. CORS (Must be first to allow the request in)
+// --- 3. MIDDLEWARE ---
 app.use(cors({
-  origin: process.env.CLIENT_URL, // https://gigflow-five.vercel.app
+  origin: process.env.CLIENT_URL, // Ensure this is https://gigflow-five.vercel.app
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']
 }));
 
-// B. JSON PARSER (Fixes 'req.body is undefined')
-app.use(express.json());  // <--- MAKE SURE THIS IS HERE AND BEFORE ROUTES
-
-// C. URL ENCODED (Optional, but good for form submissions)
+app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
-// D. COOKIE PARSER (Fixes 'req.cookies is undefined')
 app.use(cookieParser());
 
-// --- ROUTES (Must be AFTER middleware) ---
+// --- 4. ROUTES ---
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/gigs', require('./routes/gigRoutes'));
 app.use('/api/bids', require('./routes/bidRoutes'));
