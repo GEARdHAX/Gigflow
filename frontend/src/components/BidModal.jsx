@@ -13,31 +13,31 @@ const BidModal = ({ gig, onClose, onSuccess }) => {
   const [submitting, setSubmitting] = useState(false)
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setSubmitting(true)
+  e.preventDefault()
+  setSubmitting(true)
 
-    try {
-      await placeBid({
-        gigId: gig._id,
-        price: parseFloat(bidData.price), // No currency conversion needed
-        message: bidData.message
-      })
-      
-      toast.success('🎉 Bid submitted successfully!')
-      onSuccess()
-    } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Failed to submit bid';
-      
-      if (errorMessage.includes('already placed a bid')) {
-        toast.error('⚠️ You have already applied for this job!');
-        onClose();
-      } else {
-        toast.error(errorMessage);
-      }
-    } finally {
-      setSubmitting(false)
+  try {
+    await placeBid(gig._id, {
+      price: parseFloat(bidData.price),
+      message: bidData.message
+    })
+
+    toast.success('🎉 Bid submitted successfully!')
+    onSuccess()
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || 'Failed to submit bid'
+
+    if (errorMessage.includes('already placed a bid')) {
+      toast.error('⚠️ You have already applied for this job!')
+      onClose()
+    } else {
+      toast.error(errorMessage)
     }
+  } finally {
+    setSubmitting(false)
   }
+}
+
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">

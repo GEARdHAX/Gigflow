@@ -9,12 +9,14 @@ const sendToken = (user, statusCode, res) => {
     expiresIn: '30d'
   });
 
+  const isProduction = process.env.NODE_ENV === 'production';
+
   // 2. Define Cookie Options (CRITICAL FOR RENDER/VERCEL)
   const options = {
     expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
     httpOnly: true, // Prevent XSS
-    secure: true,   // ALWAYS true for cross-site (Render requires this)
-    sameSite: 'none' // ALWAYS 'none' to allow cross-site cookies
+    secure: isProduction,   // true for production (HTTPS), false for dev (HTTP)
+    sameSite: isProduction ? 'none' : 'lax' // 'none' requires secure: true
   };
 
   // 3. Send Response
@@ -75,12 +77,14 @@ exports.loginUser = async (req, res) => {
 // @desc    Logout user
 // @route   POST /api/auth/logout
 exports.logoutUser = (req, res) => {
+  const isProduction = process.env.NODE_ENV === 'production';
+
   // To delete a cross-site cookie, options must match creation
   res.cookie('jwt', '', {
     httpOnly: true,
     expires: new Date(0),
-    secure: true,
-    sameSite: 'none'
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax'
   });
   
   res.status(200).json({ message: 'Logged out' });

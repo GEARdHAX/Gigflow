@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { Menu, X, User as UserIcon, LogOut } from 'lucide-react'
 import { useState } from 'react'
-import Favicon from '../../public/favicon.png'
 
 const Navbar = () => {
   const { user, logout } = useAuth()
@@ -23,7 +22,7 @@ const Navbar = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-xl">
-              <img src={ Favicon} alt="" />
+              <img src="/favicon.png" alt="" />
             </div>
             <span className="text-xl font-bold text-gray-800 tracking-tight">
               GigFlow

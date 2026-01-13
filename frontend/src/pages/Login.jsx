@@ -42,8 +42,8 @@ const Login = () => {
     <div className="min-h-[80vh] flex items-center justify-center">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
-            <div className="text-white text-2xl font-bold">G</div>
+          <div className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+            <div className="text-white text-2xl font-bold"><img src="/favicon.png" alt="" /></div>
           </div>
           <h1 className="text-3xl font-bold text-gray-900">Welcome Back</h1>
           <p className="text-gray-600 mt-2">Sign in to your GigFlow account</p>
@@ -73,9 +73,6 @@ const Login = () => {
                 <label className="block text-sm font-medium text-gray-700">
                   Password
                 </label>
-                <Link to="/forgot-password" className="text-sm text-blue-600 hover:text-blue-700">
-                  Forgot password?
-                </Link>
               </div>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />

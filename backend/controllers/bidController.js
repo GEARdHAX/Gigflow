@@ -1,173 +1,145 @@
 const mongoose = require('mongoose');
 const Bid = require('../models/Bid');
 const Gig = require('../models/Gig');
-const socketUtil = require('../utils/socket'); // For Real-time Bonus
-const { calculateATSScore } = require('../utils/atsService'); // Import the utility
 
+// @desc    Place a new bid
+// @route   POST /api/bids/:gigId
+exports.placeBid = async (req, res) => {
+  try {
+    const { message, price } = req.body;
+    const { gigId } = req.params;
 
-exports.getMyBids = async (req, res) => {
-  try {
-    const bids = await Bid.find({ freelancerId: req.user._id })
-      .populate('gigId', 'title status') // Get Gig title and status
-      .sort({ createdAt: -1 });
-    res.json(bids);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-exports.createBid = async (req, res) => {
-  try {
-    const { gigId, message, price } = req.body;
-    
-    // Check if gig exists and is open
+    // 1. Check if Gig exists and is Open
     const gig = await Gig.findById(gigId);
-    if (!gig || gig.status !== 'open') {
-      return res.status(400).json({ message: 'Gig not available' });
+    if (!gig) return res.status(404).json({ message: 'Gig not found' });
+    if (gig.status !== 'open') {
+      return res.status(400).json({ message: 'This gig is no longer accepting bids' });
     }
 
-    // Prevent owner from bidding on own gig
-    if (gig.ownerId.toString() === req.user._id.toString()) {
-      return res.status(400).json({ message: 'Cannot bid on your own gig' });
-    }
-    const existingBid = await Bid.findOne({ 
-      gigId: gigId, 
-      freelancerId: req.user._id 
-    });
-
+    // 2. Check if user already bid
+    const existingBid = await Bid.findOne({ gigId, freelancerId: req.user._id });
     if (existingBid) {
-      return res.status(400).json({ message: 'You have already placed a bid on this gig.' });
+      return res.status(400).json({ message: 'You have already placed a bid on this gig' });
     }
+
+    // 3. Create Bid
     const bid = await Bid.create({
       gigId,
       freelancerId: req.user._id,
       message,
       price
     });
+
     res.status(201).json(bid);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// @desc    Get bids for a specific gig (Owner only)
-// @route   GET /api/bids/:gigId
-exports.getBidsByGig = async (req, res) => {
+// @desc    Get all bids for a specific gig (Client view)
+// @route   GET /api/bids/gig/:gigId
+exports.getBidsForGig = async (req, res) => {
   try {
-    const gig = await Gig.findById(req.params.gigId);
-    
-    // Security check: Only the owner sees bids [cite: 30]
-    if (gig.ownerId.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Not authorized' });
-    }
-
     const bids = await Bid.find({ gigId: req.params.gigId })
-      .populate('freelancerId', 'name email');
+      .populate('freelancerId', 'name email')
+      .sort({ createdAt: -1 });
+
     res.json(bids);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-exports.hireFreelancer = async (req, res) => {
-  const session = await mongoose.startSession(); // Start Transaction [cite: 37]
-  session.startTransaction();
-
+// @desc    Get all bids by current user (Freelancer view)
+// @route   GET /api/bids/my-bids
+exports.getMyBids = async (req, res) => {
   try {
-    const { bidId } = req.params;
-    const bid = await Bid.findById(bidId).session(session);
+    const bids = await Bid.find({ freelancerId: req.user._id })
+      .populate('gigId', 'title budget status')
+      .sort({ createdAt: -1 });
 
-    if (!bid) {
-      await session.abortTransaction();
-      return res.status(404).json({ message: 'Bid not found' });
-    }
-
-    const gig = await Gig.findById(bid.gigId).session(session);
-
-    // Authorization Check
-    if (gig.ownerId.toString() !== req.user._id.toString()) {
-      await session.abortTransaction();
-      return res.status(403).json({ message: 'Not authorized' });
-    }
-
-    // RACE CONDITION CHECK [cite: 38]
-    // If another admin hired someone else 1ms ago, this will be 'assigned'
-    // and this transaction will fail here.
-    if (gig.status === 'assigned') {
-      await session.abortTransaction();
-      return res.status(400).json({ message: 'Gig already assigned to someone else!' });
-    }
-
-    // 1. Update Gig Status
-    gig.status = 'assigned';
-    await gig.save({ session });
-
-    // 2. Update Chosen Bid Status
-    bid.status = 'hired';
-    await bid.save({ session });
-
-    // 3. Reject all OTHER bids for this gig
-    await Bid.updateMany(
-      { gigId: gig._id, _id: { $ne: bidId } },
-      { status: 'rejected' }
-    ).session(session);
-
-    // Commit Transaction (Atomic Update)
-    await session.commitTransaction();
-    session.endSession();
-
-    // BONUS 2: Real-time Notification [cite: 40]
-    const io = socketUtil.getIO();
-    // Emit to the specific freelancer's room
-    io.to(bid.freelancerId.toString()).emit('notification:hired', {
-      message: `You have been hired for ${gig.title}!`,
-      gigId: gig._id
-    });
-
-    res.json({ message: 'Freelancer hired successfully' });
-
+    res.json(bids);
   } catch (error) {
-    // If anything fails, rollback everything
-    await session.abortTransaction();
-    session.endSession();
     res.status(500).json({ message: error.message });
   }
 };
 
-exports.getBidsByGig = async (req, res) => {
-  try {
-    const gig = await Gig.findById(req.params.gigId);
-    
-    if (!gig) return res.status(404).json({ message: 'Gig not found' });
+// @desc    Hire a freelancer (Atomic Transaction + Notification)
+// @route   PUT /api/bids/hire/:bidId
+exports.hireFreelancer = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-    // Check ownership
-    if (gig.ownerId.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Not authorized' });
+  try {
+    const { bidId } = req.params;
+
+    // 1. Find the Bid and Update to 'hired'
+    const bid = await Bid.findByIdAndUpdate(
+      bidId, 
+      { status: 'hired' }, 
+      { session, new: true }
+    ).populate('gigId');
+
+    if (!bid) {
+      throw new Error('Bid not found');
     }
 
-    const bids = await Bid.find({ gigId: req.params.gigId })
-      .populate('freelancerId', 'name email')
-      .sort({ createdAt: -1 });
+    // 2. Verify Gig is still Open (Concurrency Check)
+    if (bid.gigId.status !== 'open') {
+      throw new Error('This gig is already assigned or closed');
+    }
 
-    // --- FIX STARTS HERE ---
-    const bidsWithScores = bids.map(bid => {
-      // 1. Convert Mongoose Document to Plain JS Object
-      const bidObj = bid.toObject(); 
+    // 3. Update Gig Status to 'assigned'
+    await Gig.findByIdAndUpdate(
+      bid.gigId._id, 
+      { status: 'assigned' }, 
+      { session }
+    );
 
-      // 2. Calculate Score
-      const score = calculateATSScore(gig.description, bid.message);
+    // 4. Reject all OTHER bids for this gig
+    await Bid.updateMany(
+      { gigId: bid.gigId._id, _id: { $ne: bidId } },
+      { status: 'rejected' },
+      { session }
+    );
 
-      // 3. Attach Score to the plain object
-      bidObj.atsScore = score;
+    // 5. COMMIT THE TRANSACTION (Database work is done)
+    await session.commitTransaction();
+    
+    // --- SAFE ZONE: DATABASE IS SAVED ---
+    // We end the session immediately to free up connection
+    session.endSession();
 
-      return bidObj;
-    });
+    // 6. Send Real-Time Notification (Isolated from DB Transaction)
+    // Even if this fails, the hiring is already saved.
+    try {
+      if (req.io && req.userSocketMap) {
+        const freelancerId = bid.freelancerId.toString();
+        const socketId = req.userSocketMap.get(freelancerId);
 
-    // 4. Sort by Score (Highest first)
-    bidsWithScores.sort((a, b) => b.atsScore - a.atsScore);
-    // --- FIX ENDS HERE ---
+        if (socketId) {
+          req.io.to(socketId).emit('notification', {
+            message: `🎉 You have been hired for "${bid.gigId.title}"!`
+          });
+          console.log(`Notification sent to user ${freelancerId}`);
+        } else {
+          console.log(`User ${freelancerId} is offline, notification skipped.`);
+        }
+      }
+    } catch (notifyError) {
+      console.error("Socket notification error:", notifyError.message);
+    }
 
-    res.json(bidsWithScores);
+    res.json({ success: true, message: 'Freelancer hired successfully' });
+
   } catch (error) {
+    // 7. SAFE ABORT (Only abort if transaction is still active)
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
+    session.endSession();
+    
+    console.error("Hiring Transaction Failed:", error.message);
     res.status(500).json({ message: error.message });
   }
 };

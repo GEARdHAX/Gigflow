@@ -6,8 +6,8 @@ export const fetchBids = async (gigId) => {
   return data
 }
 
-export const placeBid = async (bidData) => {
-  const { data } = await apiClient.post('/bids', bidData)
+export const placeBid = async (gigId,bidData) => {
+  const { data } = await apiClient.post(`/bids/${gigId}`, bidData)
   return data
 }
 
