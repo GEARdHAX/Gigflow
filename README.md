@@ -10,7 +10,7 @@
 
 **A complete freelancing platform where clients post jobs and freelancers bid for opportunities**
 
-[Demo Video](#-demo) • [Live Preview](#-live-demo) • [Features](#-features) • [Installation](#-installation)
+[Demo Video](https://www.loom.com/share/7aacbfba3f134fc88e21b1f06a1b8e81) • [Live Preview](https://gigflow-five.vercel.app/login) • [Features](#-features) • [Installation](#-installation)
 
 </div>
 
@@ -26,7 +26,7 @@ GigFlow is a production-ready freelance marketplace that connects businesses wit
 |----------|-----|--------|
 | **🌐 Frontend** | [gigflow.vercel.app](https://gigflow.vercel.app) | ![Live](https://img.shields.io/badge/Live-Online-brightgreen) |
 | **🔧 Backend API** | [gigflow-api.onrender.com](https://gigflow-api.onrender.com) | ![API](https://img.shields.io/badge/API-Running-blue) |
-| **🎥 Demo Video** | [Watch on Loom](https://www.loom.com/share/...) | ![Video](https://img.shields.io/badge/2_Min-Walkthrough-orange) |
+| **🎥 Demo Video** | [Watch on Loom](https://www.loom.com/share/7aacbfba3f134fc88e21b1f06a1b8e81) | ![Video](https://img.shields.io/badge/2_Min-Walkthrough-orange) |
 
 ## 🎯 Features
 
@@ -212,7 +212,7 @@ VITE_API_URL=http://localhost:5000/api
 4. **Hiring Workflow** - One-click hiring with real-time notifications
 5. **Dashboard Management** - View and manage gigs/bids
 
-[![Watch Demo](https://img.shields.io/badge/📺_Watch_Full_Demo_on_Loom-FF0000?style=for-the-badge&logo=loom)](https://www.loom.com/share/...)
+[![Watch Demo](https://img.shields.io/badge/📺_Watch_Full_Demo_on_Loom-FF0000?style=for-the-badge&logo=loom)](https://www.loom.com/share/7aacbfba3f134fc88e21b1f06a1b8e81)
 
 ## 🔥 Deployment Guide
 
