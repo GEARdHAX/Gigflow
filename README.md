@@ -25,7 +25,7 @@ GigFlow is a production-ready freelance marketplace that connects businesses wit
 | Platform | URL | Status |
 |----------|-----|--------|
 | **🌐 Frontend** | [gigflow.vercel.app](https://gigflow.vercel.app) | ![Live](https://img.shields.io/badge/Live-Online-brightgreen) |
-| **🔧 Backend API** | [gigflow-api.onrender.com](https://gigflow-api.onrender.com) | ![API](https://img.shields.io/badge/API-Running-blue) |
+| **🔧 Backend API** | [gigflow-api.onrender.com](powerful-natalie-adarsharya2911-a06d181d.koyeb.app/api) | ![API](https://img.shields.io/badge/API-Running-blue) |
 | **🎥 Demo Video** | [Watch on Loom](https://www.loom.com/share/7aacbfba3f134fc88e21b1f06a1b8e81) | ![Video](https://img.shields.io/badge/2_Min-Walkthrough-orange) |
 
 ## 🎯 Features
