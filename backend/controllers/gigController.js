@@ -35,7 +35,7 @@ exports.getGigs = async (req, res) => {
 
     if (search) {
       // Regex for partial match, case insensitive [cite: 19]
-      query.title = { $regex: search, $options: 'i' }; 
+      query.title = { $regex: search, $options: 'i' };
     }
 
     const gigs = await Gig.find(query).populate('ownerId', 'name email').sort({ createdAt: -1 });
@@ -43,7 +43,11 @@ exports.getGigs = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-};exports.updateGig = async (req, res) => {
+};
+
+// @desc    Update a Gig
+// @route   PUT /api/gigs/:id
+exports.updateGig = async (req, res) => {
   try {
     const gig = await Gig.findById(req.params.id);
 

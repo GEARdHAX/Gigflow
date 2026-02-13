@@ -5,10 +5,11 @@ const bidSchema = new mongoose.Schema({
   freelancerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   message: { type: String, required: true },
   price: { type: Number, required: true },
-  status: { 
-    type: String, 
-    enum: ['pending', 'hired', 'rejected'], 
-    default: 'pending' 
+  atsScore: { type: Number, default: 0 },
+  status: {
+    type: String,
+    enum: ['pending', 'hired', 'rejected'],
+    default: 'pending'
   },
 }, { timestamps: true });
 

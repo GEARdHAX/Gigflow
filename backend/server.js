@@ -13,8 +13,21 @@ connectDB();
 app.set('trust proxy', 1); // <--- ADD THIS LINE HERE
 
 // --- 3. MIDDLEWARE ---
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://gigflow-five.vercel.app',
+  process.env.CLIENT_URL
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.CLIENT_URL, // Ensure this is https://gigflow-five.vercel.app
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('CORS not allowed'), false);
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']
 }));

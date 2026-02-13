@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Bid = require('../models/Bid');
 const Gig = require('../models/Gig');
+const { calculateATSScore } = require('../utils/atsService');
 
 // @desc    Place a new bid
 // @route   POST /api/bids/:gigId
@@ -22,12 +23,16 @@ exports.placeBid = async (req, res) => {
       return res.status(400).json({ message: 'You have already placed a bid on this gig' });
     }
 
-    // 3. Create Bid
+    // 3. Calculate ATS Score (compares gig description against bid message)
+    const atsScore = calculateATSScore(gig.description, message);
+
+    // 4. Create Bid with ATS Score
     const bid = await Bid.create({
       gigId,
       freelancerId: req.user._id,
       message,
-      price
+      price,
+      atsScore
     });
 
     res.status(201).json(bid);
@@ -75,8 +80,8 @@ exports.hireFreelancer = async (req, res) => {
 
     // 1. Find the Bid and Update to 'hired'
     const bid = await Bid.findByIdAndUpdate(
-      bidId, 
-      { status: 'hired' }, 
+      bidId,
+      { status: 'hired' },
       { session, new: true }
     ).populate('gigId');
 
@@ -91,8 +96,8 @@ exports.hireFreelancer = async (req, res) => {
 
     // 3. Update Gig Status to 'assigned'
     await Gig.findByIdAndUpdate(
-      bid.gigId._id, 
-      { status: 'assigned' }, 
+      bid.gigId._id,
+      { status: 'assigned' },
       { session }
     );
 
@@ -105,7 +110,7 @@ exports.hireFreelancer = async (req, res) => {
 
     // 5. COMMIT THE TRANSACTION (Database work is done)
     await session.commitTransaction();
-    
+
     // --- SAFE ZONE: DATABASE IS SAVED ---
     // We end the session immediately to free up connection
     session.endSession();
@@ -138,7 +143,7 @@ exports.hireFreelancer = async (req, res) => {
       await session.abortTransaction();
     }
     session.endSession();
-    
+
     console.error("Hiring Transaction Failed:", error.message);
     res.status(500).json({ message: error.message });
   }
